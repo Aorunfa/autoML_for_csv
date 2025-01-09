@@ -1,10 +1,3 @@
-'''
-coding:utf-8
-@Software: PyCharm
-@Time: 2023/12/23 21:28
-@Author: Aocf
-@versionl: 3.
-'''
 import logging
 class Logger(object):
     def __init__(self, path=None, log_name='log', mode='a'):

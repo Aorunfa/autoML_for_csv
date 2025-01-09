@@ -1,11 +1,3 @@
-'''
-coding:utf-8
-@Software: PyCharm
-@Time: 2023/12/15 9:55
-@Author: Aocf
-@versionl: 3.
-'''
-
 import numpy as np
 import pandas as pd
 import logging

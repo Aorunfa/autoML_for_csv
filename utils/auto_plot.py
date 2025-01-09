@@ -1,10 +1,3 @@
-'''
-coding:utf-8
-@Software: PyCharm
-@Time: 2023/6/12 21:12
-@Author: Aocf
-@versionl: 3.
-'''
 import warnings
 warnings.filterwarnings('ignore')
 import numpy as np
