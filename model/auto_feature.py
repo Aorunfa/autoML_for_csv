@@ -4,9 +4,13 @@ import logging
 from sklearn import metrics
 from sklearn.feature_selection import mutual_info_classif, mutual_info_regression, chi2
 from functools import partial
+try:
+    from utils import (BaseFeature, kfold_split, standardize_features, save_json)
+except:
+    from .utils import (BaseFeature, kfold_split, standardize_features, save_json)
 import warnings
 warnings.filterwarnings('ignore')
-from utils import (BaseFeature, kfold_split, standardize_features, save_json)
+
 logging.basicConfig(level=logging.INFO)
 log = logging.info
 
@@ -309,5 +313,3 @@ if __name__ == '__main__':
     save_json(result_corr, '/home/chaofeng/autoML_for_csv/doc/filter_corr.json')
     save_json(result_nest, '/home/chaofeng/autoML_for_csv/doc/filter_nest.json')
     save_json(result_wrap, '/home/chaofeng/autoML_for_csv/doc/filter_wrap.json')
-
-

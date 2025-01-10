@@ -1,6 +1,9 @@
 import numpy as np
 import pandas as pd
-from utils import BaseModel, run_pca, _model_pred, save_json
+try:
+    from utils import BaseModel, run_pca, _model_pred, save_json
+except:
+    from .utils import BaseModel, run_pca, _model_pred, save_json
 import logging
 from sklearn import metrics
 from sklearn.model_selection import StratifiedKFold, train_test_split
@@ -331,13 +334,13 @@ if __name__ == '__main__':
     df = pd.read_csv('/home/chaofeng/autoML_for_csv/data/sample.csv')
     feature = ['feature_3', 'feature_15', 'feature_8', 'feature_11', 'feature_25', 'feature_12',
                'feature_5', 'feature_210', 'feature_6', 'feature_22'] # reg
-    # label_name = 'price'
-    # result_dict = automodel.fit(df, feature, label_name)
+    label_name = 'price'
+    result_dict = automodel.fit(df, feature, label_name)
 
-    # y_pred = automodel.predict(df[feature])
-    # automodel.save_model()
+    y_pred = automodel.predict(df[feature])
+    automodel.save_model()
 
-    # save_json(result_dict, '/home/chaofeng/autoML_for_csv/doc/automodel_fit.json')
+    save_json(result_dict, '/home/chaofeng/autoML_for_csv/doc/automodel_fit.json')
 
 
     # 载入预测: 已测试单个模型无集成策略 stack集成 TODO 待测试加权集成
