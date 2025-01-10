@@ -12,9 +12,7 @@ log = logging.info
 
 class AutoFeature(BaseFeature):
     def __init__(self, corrval_withlabel=0.35, corrval_withothers=0.85, p_val=0.05, fit_type='regression', fit_metric=None, k_cv=4, group_n=-1, params_searcher='grid'):
-        
         super(AutoFeature, self).__init__()
-        self.log = logging.info
         self.fit_type = fit_type                     
         # corr fliter threshold
         self.corrval_withlabel = corrval_withlabel   
@@ -65,17 +63,16 @@ class AutoFeature(BaseFeature):
             return mi, True
 
     def filtering_reg(self, df:pd.DataFrame, feature_num:list, feature_clf:list, label_name:str):
-        # filter num feature the no corr to label
+        # filter num feature the no corr to label or corr to each other
         corr_withlabel = df[feature_num].corrwith(df[label_name], method='pearson').abs().fillna(0)
         corr_withlabel = corr_withlabel[corr_withlabel > self.corrval_withlabel]
         if corr_withlabel.shape[0] == 0:
-            self.log('无与标签相关的数值特征，重新进行特征工程')
+            log('no num feature corr to label, reback to make new feature')
             col_filter = []
         else:
-            self.log(f'过滤与标签无关的数值特征: {[x for x in feature_num if x not in corr_withlabel.index]}, 过滤阈值 {self.corrval_withlabel}')
+            log(f'filter num_feature no corr to label: {[x for x in feature_num if x not in corr_withlabel.index]}, threshold {self.corrval_withlabel}')
             if corr_withlabel.shape[0] >= 2:
                 corr_withlabel = corr_withlabel.sort_values(ascending=False)
-                # 过滤特征之间的相关的组合
                 corr_withothers = df[corr_withlabel.index].corr(method='pearson').abs()
                 n = 0
                 col_drop = []
@@ -89,20 +86,20 @@ class AutoFeature(BaseFeature):
                             col_drop.append(col_)
                     n += 1
                 col_filter = corr_withothers.columns.to_list()
-                self.log(f'过滤自相关特征: {col_drop}, 过滤阈值{self.corrval_withothers}')
+                log(f'filter num_feature corr to each other: {col_drop}, threshold{self.corrval_withothers}')
             else:
                 col_filter = list(corr_withlabel.index)
 
-        # 过滤与标签独立的分类变量
+        # filter cat feature the no corr to label
         col_drop = []
         for f in feature_clf:
             p, jude = self._indpendent_test(df[f], df[label_name])
             if jude:
                 col_drop.append(f)
         col_filter2 = [x for x in feature_clf if x not in col_drop]
-        self.log(f'过滤与标签无关的分类特征: {col_drop}')
-        self.log(f'剩余数值特征: {col_filter}')
-        self.log(f'剩余分类特征: {col_filter2}')
+        log(f'filter cat_feature no corr to label: {col_drop}')
+        log(f'num left: {col_filter}')
+        log(f'cat left: {col_filter2}')
 
         result = {'num_feature': {'left': col_filter, 'filter': [i for i in feature_num if i not in col_filter]},
                   'cat_feature': {'left': col_filter2, 'filter': [i for i in feature_clf if i not in col_filter2]},
@@ -115,7 +112,7 @@ class AutoFeature(BaseFeature):
 
 
     def filtering_clf(self, df:pd.DataFrame, feature_num:list, feature_clf:list, label_name:str):
-        # 过滤与标签独立的数值变量
+        # filter num feature no corr to label
         col_drop = []
         p_ls = []
         for f in feature_num:
@@ -125,11 +122,11 @@ class AutoFeature(BaseFeature):
             else:
                 p_ls.append(p)
         col_filter = [x for x in feature_num if x not in col_drop]
-        self.log(f'过滤与标签无关的数值特征: {col_drop}')
+        log(f'filter num feature no corr to label: {col_drop}')
 
-        # 过滤自相关的数值变量
+        # filter num feature corr to each other
         if len(col_filter) >= 2:
-            # 按照p值降序排序
+            # order by p
             col_dict = dict(sorted(dict(zip(col_filter, p_ls)).items(), key=lambda x: x[1])[::-1])
             corr_withothers = df[col_dict.keys()].corr(method='pearson').abs()
             n = 0
@@ -144,18 +141,18 @@ class AutoFeature(BaseFeature):
                         col_drop.append(col_)
                 n += 1
             col_filter = corr_withothers.columns.to_list()
-            self.log(f'过滤自相关的数值特征: {col_drop}')
+            log(f'filter num feature corr to each other: {col_drop}')
 
-        # 过滤与标签独立的分类变量
+        # filter cat feature no corr to label
         col_drop = []
         for f in feature_clf:
             p, jude = self._indpendent_test(df[f], df[label_name])
             if jude:
                 col_drop.append(f)
         col_filter2 = [x for x in feature_clf if x not in col_drop]
-        self.log(f'过滤与标签无关的分类特征: {col_drop}')
-        self.log(f'剩余数值特征: {col_filter}')
-        self.log(f'剩余分类特征: {col_filter2}')
+        log(f'filter cat feature no corr to label: {col_drop}')
+        log(f'num left: {col_filter}')
+        log(f'cat left: {col_filter2}')
 
         result = {'num_feature': {'left': col_filter, 'filter': [i for i in feature_num if i not in col_filter]},
                   'cat_feature': {'left': col_filter2, 'filter': [i for i in feature_clf if i not in col_filter2]},
@@ -166,28 +163,28 @@ class AutoFeature(BaseFeature):
         return  df[col_filter + col_filter2 + [label_name]], result
         
     def filter_corr(self, df:pd.DataFrame, feature_num:list, feature_clf:list, label_name:str):
-        self.log('--'*5 + f'进行过滤式操作, 操作类型{self.fit_type}' + '--'*5)
+        log('--'*5 + f'filter corr' + '--'*5)
         if self.fit_type == 'regression':
             return self.filtering_reg(df, feature_num, feature_clf, label_name)
         else:
             return self.filtering_clf(df, feature_num, feature_clf, label_name)
 
-    def filter_nesting(self, df, feture_ls, label_name, top_k=10):
-        self.log('--' * 5 + f'进行嵌套式过滤' + '--' * 5)
+    def filter_nesting(self, df, feature_ls, label_name, top_k=10):
+        log('--' * 5 + f'filter nesting' + '--' * 5)
         self._set_models()
         self._set_params()
         score_fun = metrics.make_scorer(self._metric_fun)
         
         # init
         result_dict = {'filter_type': 'nesting', 'label': label_name}
-        feture_importance = np.zeros((len(self.search_models), len(feture_ls)))
+        feature_importance = np.zeros((len(self.search_models), len(feature_ls)))
         weights = np.zeros(len(self.search_models))
-        X_search, _, _ = standardize_features(df[feture_ls])
+        X_search, _, _ = standardize_features(df[feature_ls])
         
         for i, (k, model) in enumerate(self.search_models.items()):
-            mat_importance = np.zeros((self.k_cv, len(feture_ls)))
+            mat_importance = np.zeros((self.k_cv, len(feature_ls)))
             ls_metrics = []
-            print('kkkkk', k)
+            # print('kkkkk', k)
             if k == 'xgb':
                 continue
 
@@ -201,44 +198,44 @@ class AutoFeature(BaseFeature):
             
             # get best scores 
             for j, (train_idx, valid_idx) in enumerate(self._k_split(df, label_name)):
-                X_train, y_train = df.loc[train_idx, feture_ls], df.loc[train_idx, label_name]
-                X_valid, y_valid = df.loc[valid_idx, feture_ls], df.loc[valid_idx, label_name]
+                X_train, y_train = df.loc[train_idx, feature_ls], df.loc[train_idx, label_name]
+                X_valid, y_valid = df.loc[valid_idx, feature_ls], df.loc[valid_idx, label_name]
                 # standerdize 
                 X_train, u, std = standardize_features(X_train)
                 X_valid = standardize_features(X_valid, 'valid', u, std)
                 model.fit(X_train, y_train)
                 
                 try:
-                    feature_importance = np.abs(model.feature_importances_)
+                    fi = np.abs(model.feature_importances_)
                 except:
-                    feature_importance = np.abs(model.coef_)
+                    fi = np.abs(model.coef_)
                 
-                feature_importance = feature_importance / np.sum(feature_importance)  # normalize
+                fi = fi / np.sum(fi)  # normalize
                 val_metrics = self._metric_fun(y_valid, model.predict(X_valid))
                 
-                mat_importance[j] = feature_importance
+                mat_importance[j] = fi
                 ls_metrics.append(val_metrics)
             
-            feture_importance[i] = np.mean(mat_importance, axis=0)
+            feature_importance[i] = np.mean(mat_importance, axis=0)
             weights[i] = np.mean(ls_metrics)
-            self.log(f'模型{k}权值: {weights[i]}, 特征评分：{feture_importance[i]}')
-            result_dict[k] = {'metric': weights[i], 'feture_importance': dict(zip(feture_ls, feture_importance[i]))}
+            log(f'model {k} metric: {weights[i]}, feature importance：{feature_importance[i]}')
+            result_dict[k] = {'metric': weights[i], 'feature_importance': dict(zip(feature_ls, feature_importance[i]))}
 
         # bagging
         weights_ = np.reshape(weights / sum(weights), (-1, 1))
-        feture_importance = tuple(zip(feture_ls, np.sum(feture_importance * weights_, axis=0)))
-        feture_importance = dict(sorted(feture_importance, key=lambda x: x[1])[::-1])
+        feature_importance = tuple(zip(feature_ls, np.sum(feature_importance * weights_, axis=0)))
+        feature_importance = dict(sorted(feature_importance, key=lambda x: x[1])[::-1])
         model_weights = sorted(tuple(zip(self.search_models.keys(), weights)), key=lambda x:x[1])[::-1]
-        self.log(f'最终特征评分结果{feture_importance}')
-        self.log(f'评估模型指标排序：{model_weights}')
+        log(f'final feature_importance: {feature_importance}')
+        log(f'model metric sorted: {model_weights}')
         
-        result_dict['integrated'] = {'model_weight': dict(model_weights), 'feture_importance': dict(feture_importance)}
-        feture_importance = dict(list(feture_importance.items())[:top_k])
-        return feture_importance, result_dict
+        result_dict['integrated'] = {'model_weight': dict(model_weights), 'feature_importance': dict(feature_importance)}
+        feature_importance = dict(list(feature_importance.items())[:top_k])
+        return feature_importance, result_dict
 
     def filter_wrapping(self, df:pd.DataFrame, feature_ls: list, label_name: str, base_model='cart', group_n=-1):
         # 包裹式特征筛选
-        self.log('--' * 5 + f'进行包裹式过滤, 基模型{base_model}' + '--' * 5)
+        log('--' * 5 + f'filter wrapping, base model: {base_model}' + '--' * 5)
         self._set_models()
         self._set_params()
         score_fun = metrics.make_scorer(self._metric_fun)
@@ -274,18 +271,18 @@ class AutoFeature(BaseFeature):
             metric_opt_ls.append(f_opt[1])
             feature_ls.remove(f_opt[0])
             n += 1
-            self.log(f'增加第{n-1}个特征: {f_opt[0]}, 评价指标数值{f_opt[1]}')
+            log(f'add {n-1} fea: {f_opt[0]}, metric: {f_opt[1]}')
             result_add['add %d' % (n-1)] = {'feature_add': f_opt[0], 'metric_update': f_opt[1]}
 
         # find best combination in group_n
         feature_opt_ls = feature_opt_ls[:np.argmax(metric_opt_ls) + 1]
-        self.log(f'最终评价结果: {max(metric_opt_ls)}, 特征组合{feature_opt_ls}')
+        log(f'final metric: {max(metric_opt_ls)}, feature group: {feature_opt_ls}')
         result_dict['final'] = {'metric': max(metric_opt_ls), 'feature_group': feature_opt_ls}
         result_dict.update(result_add)
         return feature_opt_ls, result_dict
 
 if __name__ == '__main__':
-    # 功能测试
+    # test
     # af = AutoFeature(fit_type='classification', fit_metric='rec_pre')
     af = AutoFeature(fit_type='regression', fit_metric='r2')
     df = pd.read_csv('/home/chaofeng/autoML_for_csv/data/sample.csv')

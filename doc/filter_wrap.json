@@ -4,16 +4,15 @@
   "base_model": "cart",
   "group_n": -1,
   "final": {
-    "metric": 0.7918791359701818,
+    "metric": 0.8015848054829752,
     "feature_group": [
       "feature_3",
       "feature_15",
       "feature_8",
       "feature_25",
-      "feature_11",
       "feature_6",
       "feature_5",
-      "feature_12"
+      "feature_22"
     ]
   },
   "add 1": {
@@ -26,34 +25,34 @@
   },
   "add 3": {
     "feature_add": "feature_8",
-    "metric_update": 0.7799349991771145
+    "metric_update": 0.7825165499295075
   },
   "add 4": {
     "feature_add": "feature_25",
-    "metric_update": 0.7874722356965008
+    "metric_update": 0.7843889660891267
   },
   "add 5": {
-    "feature_add": "feature_11",
-    "metric_update": 0.7871645955051467
+    "feature_add": "feature_6",
+    "metric_update": 0.7856916269426513
   },
   "add 6": {
-    "feature_add": "feature_6",
-    "metric_update": 0.7840799029865892
+    "feature_add": "feature_5",
+    "metric_update": 0.7926831740639568
   },
   "add 7": {
-    "feature_add": "feature_5",
-    "metric_update": 0.7917401435802236
+    "feature_add": "feature_22",
+    "metric_update": 0.8015848054829752
   },
   "add 8": {
-    "feature_add": "feature_12",
-    "metric_update": 0.7918791359701818
+    "feature_add": "feature_210",
+    "metric_update": 0.8006067195879184
   },
   "add 9": {
-    "feature_add": "feature_210",
-    "metric_update": 0.7862217562206135
+    "feature_add": "feature_12",
+    "metric_update": 0.7883884732063574
   },
   "add 10": {
-    "feature_add": "feature_22",
-    "metric_update": 0.7849578429338908
+    "feature_add": "feature_11",
+    "metric_update": 0.7874168627444418
   }
 }
