@@ -17,7 +17,7 @@ pip install -r requirements.txt
 ```
 
 # 快速使用
-## 自动化特征筛选
+## 01 自动化特征筛选
 ```python
 # 定义问题时回归还是分类，定义模型评价指标
 af = AutoFeature(fit_type='regression', fit_metric='r2')
@@ -53,7 +53,7 @@ save_json(result_nest, './doc/filter_nest.json')
 save_json(result_wrap, './doc/filter_wrap.json')
 ```
 
-## 自动化建模
+## 02 自动化建模
 模型训练
 ```python
 from model.auto_model import AutoModel
@@ -101,6 +101,6 @@ r2 = metrics.r2_score(y_true=df['price'].to_list(), y_pred=preds)
 print(r2)
 ```
 
-## 快速绘图
+## 03 快速绘图
 使用说明见`doc/plot_indroduce.md`，代码操作见`autoML_for_csv/doc/auto_plot_demo.ipynb`
 
