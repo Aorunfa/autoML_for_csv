@@ -286,6 +286,8 @@ if __name__ == '__main__':
     # af = AutoFeature(fit_type='classification', fit_metric='rec_pre')
     af = AutoFeature(fit_type='regression', fit_metric='r2')
     df = pd.read_csv('/home/chaofeng/autoML_for_csv/data/sample.csv')
+    # df['price'] = pd.qcut(df['price'], q=2, labels=[x for x in range(2)])
+
     feature_num = ['feature_3', 'feature_15', 'feature_26', 'feature_11',
                     'feature_12', 'feature_194', 'feature_18', 'feature_210', 'feature_22',
                     'feature_5', 'feature_270', 'feature_6', 'feature_267', 'feature_204',
@@ -296,7 +298,6 @@ if __name__ == '__main__':
     feature_clf = ['feature_347', 'feature_298', 'feature_294']
     label_name = 'price'
 
-    # df['price'] = pd.qcut(df['price'], q=2, labels=[x for x in range(2)])
     df_filter, result_corr = af.filter_corr(df, feature_num, feature_clf, label_name)
     col_num = result_corr['num_feature']['left']
     col_clf = result_corr['cat_feature']['left']
