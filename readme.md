@@ -87,5 +87,5 @@ preds = automodel.predict(df[feature])
 ```
 
 ## 快速绘图
-使用说明见`doc/plot_indroduce.md`
+使用说明见`doc/plot_indroduce.md`，代码操作见`autoML_for_csv/doc/auto_plot_demo.ipynb`
 
