@@ -17,8 +17,8 @@ log = logging.info
 
 """
 # TODO 增加PCA降维技术 done
+# TODO 保存json结果 done
 # TODO 增加PCA模型保存、增加归一化模型保存，用于预测阶段的数据预处理
-# TODO 保存json结果
 """
 
 class AutoModel(BaseModel):
@@ -250,7 +250,7 @@ class AutoModel(BaseModel):
         path: path_like str, e.g path/file/
         """
         if path is None:
-            path = './auto_model'
+            path = './checkpoint'
             if not os.path.exists(path):
                 os.mkdir(path)
         opt, k_name, func = self.best_model
@@ -269,7 +269,7 @@ class AutoModel(BaseModel):
 
     def load_model(self, path=None):
         if path is None:
-            path = './auto_model'
+            path = './checkpoint'
         files = [x for x in os.listdir(path) if x.split('.')[1] == 'pkl']
         if len(files) == 1:
             k = files[0].split('.')[0]

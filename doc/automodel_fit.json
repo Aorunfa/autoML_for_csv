@@ -76,4 +76,37 @@
     "metric_test": 0.7754170136038205,
     "is_flitered": true,
     "best_hyps": {
-      "estimator": 
+      "estimator": "cart",
+      "learning_rate": 0.1,
+      "n_estimators": 25,
+      "random_state": 2023
+    }
+  },
+  "model_rdf": {
+    "metric_test": 0.7530581230295617,
+    "is_flitered": true,
+    "best_hyps": {
+      "max_depth": 4,
+      "n_estimators": 60,
+      "random_state": 2023
+    }
+  },
+  "best_ensemble": {
+    "softw": {
+      "metric_test": 0.8208063122693081
+    },
+    "soft": {
+      "metric_test": 0.8206185053295265
+    },
+    "stack": {
+      "metric_test": 0.8255183133425483
+    },
+    "stack_cart": {
+      "metric_test": 0.7999590837702448
+    },
+    "best_ensemble": {
+      "method": "stack",
+      "metric_test": 0.8255183133425483
+    }
+  }
+}
