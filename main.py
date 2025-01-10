@@ -1,9 +1,1 @@
-
-
-"""
-开发目标:
-    特征评分存储csv
-    模型效果存储csv
-
-    日志正常输出
-"""
+from model.auto_model import AutoModel

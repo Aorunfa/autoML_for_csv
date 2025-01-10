@@ -10,7 +10,7 @@ import joblib
 import os
 import json
 import warnings
-from typing import Union, List
+from typing import Union
 warnings.filterwarnings('ignore')
 logging.basicConfig(level=logging.INFO)
 log = logging.info
@@ -37,6 +37,7 @@ class AutoModel(BaseModel):
         self.params_searcher = params_searcher 
         self.pca_ratio = pca_ratio              # ratio of tainning data info to keep for pca, if None, then no pca for data
         self.pca = None
+        self.scaler = None
         self.stack_model = {}
 
         if self.fit_type not in ['regression', 'classification']:
@@ -62,9 +63,9 @@ class AutoModel(BaseModel):
         else:
             X_data = df[feture_ls]
         X_train, X_test, y_train, y_test = train_test_split(X_data, df[label_name], test_size=0.2, random_state=2023)
-        scaler = StandardScaler()
-        self.X_train = scaler.fit_transform(X_train)
-        self.X_test = scaler.transform(X_test)
+        self.scaler = StandardScaler()
+        self.X_train = self.scaler.fit_transform(X_train)
+        self.X_test = self.scaler.transform(X_test)
         self.y_train, self.y_test = y_train, y_test
 
     def fit(self, df: pd.DataFrame, feture_ls:list, label_name:str, models:list=None):
@@ -172,6 +173,17 @@ class AutoModel(BaseModel):
             return (0, k_test, partial(_model_pred, model=self.models_fit[k_test])), result_dict
 
     def predict(self, X_feature: Union[pd.DataFrame, np.array]):
+        # peprocess: standerdize and pca
+        if self.pca is not None:
+            X_feature = self.pca.transform(X_feature)
+            cols_need = np.where(np.cumsum(self.pca.explained_variance_ratio_) <= self.pca_ratio)
+            cols_need = list(cols_need[0])
+            X_feature = X_feature[:, cols_need + [cols_need[-1] + 1]]
+        
+        if self.scaler is not None:
+            X_feature = self.scaler.transform(X_feature)
+
+        # inference
         ensemble, k_, func = self.best_model
         if ensemble:
             mat_pred = np.zeros((X_feature.shape[0], len(self.models_fit)))
@@ -251,8 +263,8 @@ class AutoModel(BaseModel):
         """
         if path is None:
             path = './checkpoint'
-            if not os.path.exists(path):
-                os.mkdir(path)
+            os.makedirs(path, exist_ok=True)
+    
         opt, k_name, func = self.best_model
         if opt:
             for k, model in self.models_fit.items():
@@ -266,11 +278,20 @@ class AutoModel(BaseModel):
         else:
             model = func.keywords['model']
             joblib.dump(model, os.path.join(path, f'{k_name}.pkl'))
+        
+        # pca
+        if self.pca is not None:
+            joblib.dump(self.pca, os.path.join(path, f'pca.pkl'))
+        
+        # scaler
+        if self.scaler is not None:
+            joblib.dump(self.scaler, os.path.join(path, f'scaler.pkl'))
+
 
     def load_model(self, path=None):
         if path is None:
             path = './checkpoint'
-        files = [x for x in os.listdir(path) if x.split('.')[1] == 'pkl']
+        files = [x for x in os.listdir(path) if x.split('.')[-1] == 'pkl' and not x.startswith(('pca', 'scaler'))]
         if len(files) == 1:
             k = files[0].split('.')[0]
             model = joblib.load(os.path.join(path, files[0]))
@@ -289,7 +310,14 @@ class AutoModel(BaseModel):
                 model_stack = self.models_fit.pop(k_ensemble)
                 self.ensembler[k_ensemble] = partial(_model_pred, model=model_stack)
             self.best_model = 1, k_ensemble, self.ensembler[k_ensemble]
-    
+        
+        pca_path = os.path.join(path, 'pca.pkl')
+        scaler_path = os.path.join(path, 'scaler.pkl')
+        if os.path.exists(pca_path):
+            self.pca = joblib.load(pca_path)
+        if os.path.exists(scaler_path):
+            self.scaler = joblib.load(scaler_path)
+
 
 if __name__ == '__main__':
     # test
@@ -303,20 +331,19 @@ if __name__ == '__main__':
     df = pd.read_csv('/home/chaofeng/autoML_for_csv/data/sample.csv')
     feature = ['feature_3', 'feature_15', 'feature_8', 'feature_11', 'feature_25', 'feature_12',
                'feature_5', 'feature_210', 'feature_6', 'feature_22'] # reg
-    label_name = 'price'
-    result_dict = automodel.fit(df, feature, label_name)
+    # label_name = 'price'
+    # result_dict = automodel.fit(df, feature, label_name)
 
-    y_pred = automodel.predict(df[feature])
-    automodel.save_model(path=None)
+    # y_pred = automodel.predict(df[feature])
+    # automodel.save_model()
 
-    save_json(result_dict, '/home/chaofeng/autoML_for_csv/doc/automodel_fit.json')
+    # save_json(result_dict, '/home/chaofeng/autoML_for_csv/doc/automodel_fit.json')
 
 
-
-    # # 载入预测: 已测试单个模型无集成策略 stack集成 TODO 待测试加权集成
-    # automodel.load_model(path=None)
-    # yp = automodel.predict(df[feature])
-    # print(yp)
-    # r2 = metrics.r2_score(y_true=df['price'].to_list(), y_pred=yp)
-    # print(r2)
+    # 载入预测: 已测试单个模型无集成策略 stack集成 TODO 待测试加权集成
+    automodel.load_model(path=None)
+    yp = automodel.predict(df[feature])
+    print(yp)
+    r2 = metrics.r2_score(y_true=df['price'].to_list(), y_pred=yp)
+    print(r2)
 
