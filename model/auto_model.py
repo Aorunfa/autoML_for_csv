@@ -1,9 +1,12 @@
 import numpy as np
 import pandas as pd
 try:
-    from utils import BaseModel, run_pca, _model_pred, save_json
+    from utils import run_pca, _model_pred, save_json
+    from config import ModelConfig
 except:
-    from .utils import BaseModel, run_pca, _model_pred, save_json
+    from .utils import run_pca, _model_pred, save_json
+    from .config import ModelConfig
+
 
 import logging
 from sklearn import metrics
@@ -25,7 +28,7 @@ log = logging.info
 # TODO 增加PCA模型保存、增加归一化模型保存，用于预测阶段的数据预处理 done
 """
 
-class AutoModel(BaseModel):
+class AutoModel(ModelConfig):
     """
     auto modeling
     method: trainning multi models, and then ensamble

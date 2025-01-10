@@ -5,16 +5,18 @@ from sklearn import metrics
 from sklearn.feature_selection import mutual_info_classif, mutual_info_regression, chi2
 from functools import partial
 try:
-    from utils import (BaseFeature, kfold_split, standardize_features, save_json)
+    from utils import (kfold_split, standardize_features, save_json)
+    from config import FeatureConfig
 except:
-    from .utils import (BaseFeature, kfold_split, standardize_features, save_json)
+    from .utils import (kfold_split, standardize_features, save_json)
+    from .config import FeatureConfig
 import warnings
 warnings.filterwarnings('ignore')
 
 logging.basicConfig(level=logging.INFO)
 log = logging.info
 
-class AutoFeature(BaseFeature):
+class AutoFeature(FeatureConfig):
     def __init__(self, corrval_withlabel=0.35, corrval_withothers=0.85, p_val=0.05, fit_type='regression', fit_metric=None, k_cv=4, group_n=-1, params_searcher='grid'):
         super(AutoFeature, self).__init__()
         self.fit_type = fit_type                     

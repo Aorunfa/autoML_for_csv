@@ -33,7 +33,7 @@ feature_top, result_nest = af.filter_nesting(df_filter, col_num + col_clf, label
 # 最后输出一个特征组合
 feature_opt_ls, result_wrap = af.filter_wrapping(df, list(feature_top.keys()), 'price', base_model='cart')
 
-# 保存中间结果
+# 结果存储
 save_json(result_corr, './doc/filter_corr.json')
 save_json(result_nest, './doc/filter_nest.json')
 save_json(result_wrap, './doc/filter_wrap.json')
@@ -58,7 +58,7 @@ save_json(result_wrap, './doc/filter_wrap.json')
 # # 模型保存
 # automodel.save_model(path='./checkpoint')
 
-# # 中间结果存储
+# # 结果存储
 # save_json(result_dict, './doc/automodel_fit.json')
 
 # # 模型加载预测
