@@ -1,10 +1,9 @@
-## 持续更新中
 # 介绍
 
 &emsp;&emsp;该项目主要面向结构化数据进行有监督学习的场景，主要目的是快速进行特征挖掘，特征筛选，特征建模，并以类似torch的形式保存或载入相关建模结果。为此，项目主要开发了三个模块，帮助数据分析人员进行快速验证:
-1. auto_feature主要针对特征组冗余过滤，快速完成关键特征组的确定
-2. auto_model主要针对建模及集成寻优，快速完成模型选型与集成方式选择 
-3. auto_plot主要针对特征探索过程的可视化，快速完成相关特征的可视化分析，特征探索
+- [x] <input type="checkbox" disabled checked> auto_feature主要针对特征组冗余过滤，快速完成关键特征组的确定
+- [x] <input type="checkbox" disabled checked> auto_model主要针对建模及集成寻优，快速完成模型选型与集成方式选择 
+- [x] <input type="checkbox" disabled checked> auto_plot主要针对特征探索过程的可视化，快速完成相关特征的可视化分析，特征探索
 
 一些细节介绍见`autoML_for_csv/doc/introduce.md`
 
@@ -57,11 +56,16 @@ save_json(result_wrap, './doc/filter_wrap.json')
 ## 自动化建模
 模型训练
 ```python
+from model.auto_model import AutoModel
+from model.utils import save_json
+import pandas as pd
+from sklearn import metrics
+
 # 定义问题时回归还是分类，定义模型评价指标
 automodel = AutoModel(fit_type='regression', fit_metric='r2')
 
-# 指定标签名称，指定需要使用的特征列:
-df = pd.read_csv('/home/chaofeng/autoML_for_csv/data/sample.csv')
+# # 指定标签名称，指定需要使用的特征列:
+df = pd.read_csv('./data/sample.csv')
 feature = ['feature_3', 'feature_15', 'feature_8', 'feature_11', 'feature_25', 
             'feature_12', 'feature_5', 'feature_210', 'feature_6', 'feature_22'] 
 label_name = 'price'
@@ -73,17 +77,28 @@ result_dict = automodel.fit(df, feature, label_name)
 y_pred = automodel.predict(df[feature])
 
 # 模型保存
-automodel.save_model(path='/checkpoint')
+automodel.save_model(path='./checkpoint')
 
 # 中间结果存储
-save_json(result_dict, '/doc/automodel_fit.json')
+save_json(result_dict, './doc/automodel_fit.json')
 ```
 
 模型加载预测
 ```python
+from model.auto_model import AutoModel
+from model.utils import save_json
+import pandas as pd
+from sklearn import metrics
+
+df = pd.read_csv('./data/sample.csv')
+feature = ['feature_3', 'feature_15', 'feature_8', 'feature_11','feature_25', 'feature_12', 'feature_5', 'feature_210', 'feature_6', 'feature_22'] 
+label_name = 'price'
+
 automodel = AutoModel(fit_type='regression', fit_metric='r2')
-automodel.load_model(path=None)
+automodel.load_model(path='./checkpoint')
 preds = automodel.predict(df[feature])
+r2 = metrics.r2_score(y_true=df['price'].to_list(), y_pred=preds)
+print(r2)
 ```
 
 ## 快速绘图

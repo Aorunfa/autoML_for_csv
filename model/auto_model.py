@@ -4,6 +4,7 @@ try:
     from utils import BaseModel, run_pca, _model_pred, save_json
 except:
     from .utils import BaseModel, run_pca, _model_pred, save_json
+
 import logging
 from sklearn import metrics
 from sklearn.model_selection import StratifiedKFold, train_test_split
@@ -21,7 +22,7 @@ log = logging.info
 """
 # TODO 增加PCA降维技术 done
 # TODO 保存json结果 done
-# TODO 增加PCA模型保存、增加归一化模型保存，用于预测阶段的数据预处理
+# TODO 增加PCA模型保存、增加归一化模型保存，用于预测阶段的数据预处理 done
 """
 
 class AutoModel(BaseModel):
@@ -266,7 +267,7 @@ class AutoModel(BaseModel):
         """
         if path is None:
             path = './checkpoint'
-            os.makedirs(path, exist_ok=True)
+        os.makedirs(path, exist_ok=True)
     
         opt, k_name, func = self.best_model
         if opt:
