@@ -1,0 +1,52 @@
+{
+  "num_feature": {
+    "left": [
+      "feature_3",
+      "feature_15",
+      "feature_25",
+      "feature_11",
+      "feature_12",
+      "feature_194",
+      "feature_18",
+      "feature_210",
+      "feature_22",
+      "feature_5",
+      "feature_270",
+      "feature_6",
+      "feature_267",
+      "feature_204",
+      "feature_7",
+      "feature_281",
+      "feature_24",
+      "feature_213",
+      "feature_191",
+      "feature_230",
+      "feature_250",
+      "feature_297",
+      "feature_299",
+      "feature_90",
+      "feature_8",
+      "feature_188",
+      "feature_343"
+    ],
+    "filter": [
+      "feature_26",
+      "feature_23",
+      "feature_193",
+      "feature_352"
+    ]
+  },
+  "cat_feature": {
+    "left": [
+      "feature_347",
+      "feature_298",
+      "feature_294"
+    ],
+    "filter": []
+  },
+  "threshold": {
+    "corrval_withlabel": 0.35,
+    "corrval_withothers": 0.85,
+    "p_val": 0.05
+  }
+}

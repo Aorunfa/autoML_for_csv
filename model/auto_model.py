@@ -12,8 +12,11 @@ from lightgbm import LGBMClassifier, LGBMRegressor
 from catboost import CatBoostClassifier, CatBoostRegressor
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from skopt import BayesSearchCV
-from sklearn.ensemble import RandomForestClassifier, \
-    AdaBoostClassifier, AdaBoostRegressor, RandomForestRegressor
+from sklearn.ensemble import (
+                        RandomForestClassifier, 
+                        AdaBoostClassifier, 
+                        AdaBoostRegressor, 
+                        RandomForestRegressor)
 from functools import partial
 import joblib
 import os
