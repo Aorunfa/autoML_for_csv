@@ -1,9 +1,13 @@
 ## 持续更新中
 # 介绍
-一个对结构化数据快速进行自动特征评分、自动模型构建的工具，适用于数据分析、回归或分类的数据建模场景
+
+&emsp;&emsp;该项目主要面向结构化数据进行有监督学习的场景，主要目的是快速进行特征挖掘，特征筛选，特征建模，并以类似torch的形式保存或载入相关建模结果。为此，项目主要开发了三个模块，帮助数据分析人员进行快速验证:
+1. auto_feature主要针对特征组冗余过滤，快速完成关键特征组的确定
+2. auto_model主要针对建模及集成寻优，快速完成模型选型与集成方式选择 
+3. auto_plot主要针对特征探索过程的可视化，快速完成相关特征的可视化分析，特征探索
+一些细节介绍见`autoML_for_csv/doc/introduce.md`
 
 # 环境准备
-## 环境安装
 ```bash
 git clone https://github.com/Aorunfa/autoML_for_csv.git
 conda create -n automl python=3.10
