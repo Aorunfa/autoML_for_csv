@@ -14,9 +14,15 @@ pip install -r requirements.txt
 
 # 快速使用
 ## 自动化特征筛选
+```python
 
+```
 
 ## 自动化建模
+```python
+
+```
 
 ## 快速绘图
+使用说明见`doc/plot_indroduce.md`
 

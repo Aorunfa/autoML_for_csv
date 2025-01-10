@@ -11,6 +11,14 @@ import json
 import pandas as pd
 import numpy as np
 from typing import Union
+from sklearn.linear_model import Lasso, Ridge, LogisticRegression
+from sklearn.svm import SVC, SVR
+from sklearn.decomposition import PCA
+from sklearn.ensemble import (
+                        RandomForestClassifier, 
+                        AdaBoostClassifier, 
+                        AdaBoostRegressor, 
+                        RandomForestRegressor)
 
 class BaseFeature(object):
     def __init__(self):
@@ -159,43 +167,6 @@ class BaseFeature(object):
                                      scoring=scoring_fun)
         return searcher
 
-def save_json(d:dict, json_path):
-    with open(json_path, 'w') as f:
-        json.dump(d, f, indent=2)
-
-def kfold_split(df:pd.DataFrame, labelname:str, k_cv:int, fit_type:str):
-    # kfolder split
-    assert fit_type in ['regression', 'classification']
-    if fit_type == 'regression':
-        boxes = 50
-        df.loc[:, 'box'] = pd.qcut(df[labelname], q=boxes, duplicates='drop', labels=False)
-    else:
-        df.loc[:, 'box'] = df[labelname]
-    skfold = StratifiedKFold(n_splits=k_cv, shuffle=True, random_state=2023)
-    skfold_split = skfold.split(df.index, df.box)
-    return skfold_split
-
-def standardize_features(X:np.ndarray, mode='train', mean=0, std_dev=1):
-    # feature standerdize
-    if mode == 'train':
-        mean = np.mean(X, axis=0)
-        std_dev = np.std(X, axis=0)
-        return (X - mean) / std_dev, mean, std_dev
-    else:
-        return (X - mean) / std_dev
-
-
-from sklearn.linear_model import Lasso, Ridge, LogisticRegression
-from sklearn.svm import SVC, SVR
-from sklearn.decomposition import PCA
-from sklearn.ensemble import (
-                        RandomForestClassifier, 
-                        AdaBoostClassifier, 
-                        AdaBoostRegressor, 
-                        RandomForestRegressor)
-import os
-import joblib
-from functools import partial
 
 class BaseModel(object):
     def __init__(self):
@@ -375,7 +346,7 @@ class BaseModel(object):
                                      search_spaces=param_dist, n_jobs=-1, cv=cv,
                                      scoring=scoring_fun)
         return searcher
-    
+
 
 def _model_pred(X_input, model):
     return model.predict(X_input)
@@ -397,3 +368,29 @@ def run_pca(X_data: Union[pd.DataFrame, np.array], ratio=0.88):
     cols_need = list(cols_need[0])
     X_new = X_new[:, cols_need + [cols_need[-1] + 1]]
     return pd.DataFrame(X_new, columns=[f'pca_{x}' for x in range(X_new.shape[1])]), pca
+
+
+def save_json(d:dict, json_path):
+    with open(json_path, 'w') as f:
+        json.dump(d, f, indent=2)
+
+def kfold_split(df:pd.DataFrame, labelname:str, k_cv:int, fit_type:str):
+    # kfolder split
+    assert fit_type in ['regression', 'classification']
+    if fit_type == 'regression':
+        boxes = 50
+        df.loc[:, 'box'] = pd.qcut(df[labelname], q=boxes, duplicates='drop', labels=False)
+    else:
+        df.loc[:, 'box'] = df[labelname]
+    skfold = StratifiedKFold(n_splits=k_cv, shuffle=True, random_state=2023)
+    skfold_split = skfold.split(df.index, df.box)
+    return skfold_split
+
+def standardize_features(X:np.ndarray, mode='train', mean=0, std_dev=1):
+    # feature standerdize
+    if mode == 'train':
+        mean = np.mean(X, axis=0)
+        std_dev = np.std(X, axis=0)
+        return (X - mean) / std_dev, mean, std_dev
+    else:
+        return (X - mean) / std_dev

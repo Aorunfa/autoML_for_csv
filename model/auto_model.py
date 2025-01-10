@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from utils import BaseModel, run_pca, _model_pred
+from utils import BaseModel, run_pca, _model_pred, save_json
 import logging
 from sklearn import metrics
 from sklearn.model_selection import StratifiedKFold, train_test_split
@@ -16,7 +16,6 @@ logging.basicConfig(level=logging.INFO)
 log = logging.info
 
 """
-# TODO 增加新的集成模型
 # TODO 增加PCA降维技术 done
 # TODO 增加PCA模型保存、增加归一化模型保存，用于预测阶段的数据预处理
 # TODO 保存json结果
@@ -30,6 +29,7 @@ class AutoModel(BaseModel):
     def __init__(self, fit_type='regression', fit_metric=None, k_cv=4, metric_filter=0.8,
                  params_searcher='grid', pca_ratio=0.88, log_path='auto_model.log'):
         super(AutoModel, self).__init__()
+        log('--' * 10 + f'auto modeling, fit type{self.fit_type}' + '--' * 10)
         self.fit_type = fit_type                
         self.fit_metric = fit_metric           
         self.k_cv = k_cv                        # kfold
@@ -38,12 +38,11 @@ class AutoModel(BaseModel):
         self.pca_ratio = pca_ratio              # ratio of tainning data info to keep for pca, if None, then no pca for data
         self.pca = None
         self.stack_model = {}
+
         if self.fit_type not in ['regression', 'classification']:
             raise ValueError(f'fit_type erro, need to be regression or classification, get {self.fit_type}')
         if self.params_searcher not in ['grid', 'random', 'bayes']:
             raise ValueError(f"params_searcher erro, only suport 'grid, random, bayes', get {self.params_searcher}, ")
-
-        log('--' * 10 + f'auto modeling, fit type{self.fit_type}' + '--' * 10)
 
     def _k_split(self, X_train, y_train):
         # kfold split
@@ -78,11 +77,13 @@ class AutoModel(BaseModel):
         if models is not None:
             self.search_models = dict([item for item in self.search_models.items() if item[0] in models])
         
-        
-        result_dict = {'label': label_name, 'features': feture_ls}
+        result_dict = {'label': label_name, 
+                       'metric_filter_threshold': self.metric_filter, 
+                       'features': feture_ls
+                       }
         # kfold to find best hyps
         self.models_fit, self.train_matric, self.test_matric = {}, {}, {}
-        mat_train, mat_test = {}, {}  # save pred for train and test
+        mat_train, mat_test = {}, {}
         for i, (k, model) in enumerate(self.search_models.items()):
             print('kkkk', k)
             if k == 'xgb':
@@ -97,12 +98,12 @@ class AutoModel(BaseModel):
             best_params = seacher.best_params_
             model = model(**best_params)
             model.fit(self.X_train, self.y_train)
-
-            # 记录训练集和验证集结果
             y_test_pred = model.predict(self.X_test)
             metric_test = self._metric_fun(self.y_test, y_test_pred)
+            
+            # filter weak model
+            is_flitered = False
             if metric_test >= self.metric_filter:
-                # 只保留大于过滤阈值的结果
                 y_train_pred = model.predict(self.X_train)
                 metric_train = self._metric_fun(self.y_train, y_train_pred)
                 self.train_matric[k] = metric_train
@@ -113,16 +114,27 @@ class AutoModel(BaseModel):
                 log(f'get model {k}, test metric={metric_test}, best hyps: {best_params}')
             else:
                 log(f'filter model {k}, test metric={metric_test}, best hyps: {best_params}')
+                is_flitered = True
             
             if k == 'cart':
                 adb_base_model = model
+            if k == 'adb':
+                best_params['estimator'] = 'cart'
+            result_dict[f'model_{k}'] = {'metric_test': metric_test, 
+                                         'is_flitered': is_flitered,
+                                         'best_hyps': best_params}
 
         if len(self.models_fit) == 0:
             raise ValueError(f"filter all model, need to lower metric_filter threshold {self.metric_filter} or reback to make nwe feature group")
 
-        log('--' * 5 + f'all models trainning done, start to fine best ensamble path' + '--' * 5)
-        self._set_ensemble_method()
-        self.best_model = self.best_ensemble(mat_train, mat_test)
+        log('--' * 5 + f'all models trainning done, start to find the best ensamble path' + '--' * 5)
+        self.best_model, result_ensemble = self.best_ensemble(mat_train, mat_test)
+
+        print('aaaaaaaaa')
+        print(result_ensemble)
+
+        result_dict['best_ensemble'] = result_ensemble
+        return result_dict
 
     def best_ensemble(self, mat_train: Union[np.ndarray, dict], mat_test: Union[np.ndarray, dict]):
         # find best ensemble path
@@ -131,7 +143,9 @@ class AutoModel(BaseModel):
         if isinstance(mat_train, dict):
             mat_train = np.array(list(mat_train.values())).T  # shape = (n_samples, n_models)
             mat_test = np.array(list(mat_test.values())).T
+        result_dict = {}
         ensemble_metric = {}
+
         for k, ensemble in self.ensembler.items():
             if k not in ['stack', 'stack_cart']:
                 m = self._metric_fun(self.y_test, ensemble(mat_test))
@@ -139,21 +153,23 @@ class AutoModel(BaseModel):
                 m = self._metric_fun(self.y_test, ensemble(mat_train, self.y_train, mat_test))
             ensemble_metric[k] = m
             log(f'ensamble method {k}, test metric={m}')
-        # 对比训练集筛选最好的集成方法
+            result_dict[k] = {'metric_test': m}
+
+        # compare ensemble and single model, find the best
         k_e, m_test_e = max(ensemble_metric.items(), key=lambda x: x[1])
-        # k_train, m_train = max(self.train_matric.items(), key=lambda x: x[1])
         k_test, m_test = max(self.test_matric.items(), key=lambda x: x[1])
-        # 更新集成函数字典
         for sk in ['stack', 'stack_cart']:
             self.ensembler[sk] = partial(_model_pred, model=self.stack_model[sk])
+
         log(f'best ensamble model metric={m_test_e}, best single model metric={m_test}')
+        result_dict['best_ensemble'] = {'method': k_e, 'metric_test': m_test_e}
+        
         if m_test_e > m_test:
-            # ensemble works
             log(f'best ensamble method: {k_e}, metric={m_test_e}')
-            return 1, k_e, self.ensembler[k_e]
+            return (1, k_e, self.ensembler[k_e]), result_dict
         else:
             log(f'all ensamble methods no work, bset model: {k_test}, metric={m_test}')
-            return 0, k_test, partial(_model_pred, model=self.models_fit[k_test])
+            return (0, k_test, partial(_model_pred, model=self.models_fit[k_test])), result_dict
 
     def predict(self, X_feature: Union[pd.DataFrame, np.array]):
         ensemble, k_, func = self.best_model
@@ -288,9 +304,12 @@ if __name__ == '__main__':
     feature = ['feature_3', 'feature_15', 'feature_8', 'feature_11', 'feature_25', 'feature_12',
                'feature_5', 'feature_210', 'feature_6', 'feature_22'] # reg
     label_name = 'price'
-    automodel.fit(df, feature, label_name)
+    result_dict = automodel.fit(df, feature, label_name)
+
     y_pred = automodel.predict(df[feature])
     automodel.save_model(path=None)
+
+    save_json(result_dict, '/home/chaofeng/autoML_for_csv/doc/automodel_fit.json')
 
 
 
